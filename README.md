@@ -1,16 +1,30 @@
-# React + Vite
+# Mayday Doorprize
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web app untuk doorprize dengan fokus angka acak dan animasi smooth.
 
-Currently, two official plugins are available:
+## Algoritma Pengundian
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1.  **Pool Data**: Generate array 1 - 10.000 saat start awal.
+2.  **Persistence**: Pool dan riwayat menang disimpan di Local Storage agar aman pas refresh.
+3.  **Secure Random**: Menggunakan `window.crypto.getRandomValues` yang lebih baik dari logika `Math.random`, agar hasil tidak bisa ditebak.
+4.  **Animasi**: Generate 60 angka untuk angka putar dengan CSS `cubic-bezier`.
+5.  **Unique Winner**: Nomor yang menang otomatis dihapus dari pool agar tidak menang dua kali.
+6.  **History**: Hasil menang dikelompokkan per barang dan bisa diekspor ke JSON.
 
-## React Compiler
+## Cara Install & Jalankan
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1.  **Clone & Masuk Folder**
+    ```bash
+    git clone [https://github.com/mrezadit/mayday-doorprize.git](https://github.com/mrezadit/mayday-doorprize.git)
+    cd mayday-doorprize
+    ```
 
-## Expanding the ESLint configuration
+2.  **Instal Dependensi**
+    ```bash
+    npm install
+    ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3.  **Running Mode Dev**
+    ```bash
+    npm run dev
+    ```

@@ -1,33 +1,30 @@
-# Mayday Doorprize
+# Mayday Doorprize - Stadion Reborn
 
-Web app untuk doorprize dengan fokus angka acak dan animasi smooth.
+Aplikasi putaran angka doorprize sederhana untuk perayaan Hari Buruh di Stadion Benteng Reborn. Dirancang dan dipublikasi untuk menangani pengundian dengan fokus pada transparansi dan stabilitas distribusi angka.
 
-## Demo
-[https://mrezadit.github.io/mayday-doorprize/](https://mrezadit.github.io/mayday-doorprize/)
+## Fitur Teknis
 
-## Algoritma Doorprize
+*   **Stabilisator Distribusi**: Menggunakan logika Stratified Sampling untuk memastikan pemenang tersebar rata di seluruh rentang 1 - 10.000. Sistem menyeimbangkan jatah pemenang per 20 draw untuk menghindari penumpukan angka di rentang tertentu.
+*   **Secure Random**: Implementasi `window.crypto.getRandomValues()` untuk menjamin acakan tingkat tinggi yang memenuhi standar keamanan kriptografis.
+*   **Data Persistence**: Sinkronisasi otomatis ke Local Storage untuk menjaga data pool dan riwayat tetap aman jika terjadi refresh halaman atau gangguan koneksi.
+*   **Animasi Reel**: Animasi perpindahan angka menggunakan transisi CSS cubic-bezier untuk efek visual yang natural pada layar besar.
+*   **Manajemen Riwayat**: Pencatatan otomatis hasil menang per kategori barang dengan fitur ekspor ke format JSON untuk kebutuhan audit panitia.
 
-1.  **Pool Data**: Generate array 1 - 10.000 saat start awal.
-2.  **Persistence**: Pool dan riwayat menang disimpan di Local Storage agar aman pas refresh.
-3.  **Secure Random**: Menggunakan `window.crypto.getRandomValues` yang lebih baik dari logika `Math.random`, agar hasil tidak bisa ditebak.
-4.  **Animasi**: Generate 60 angka untuk angka putar dengan CSS `cubic-bezier`.
-5.  **Unique Winner**: Nomor yang menang otomatis dihapus dari pool agar tidak menang dua kali.
-6.  **History**: Hasil menang dikelompokkan per barang dan bisa diekspor ke JSON.
+## Instalasi dan Penggunaan
 
-## Cara Install & Jalankan
-
-1.  **Clone & Masuk Folder**
+1.  **Clone Repository**
     ```bash
     git clone [https://github.com/mrezadit/mayday-doorprize.git](https://github.com/mrezadit/mayday-doorprize.git)
     cd mayday-doorprize
     ```
 
 2.  **Instal Dependensi**
-    ```bash
+    
+```bash
     npm install
     ```
 
-3.  **Running Mode Dev**
+3.  **Jalankan Mode Development**
     ```bash
     npm run dev
     ```

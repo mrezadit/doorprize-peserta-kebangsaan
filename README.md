@@ -2,6 +2,9 @@
 
 Aplikasi putaran angka doorprize sederhana untuk perayaan Hari Buruh di Stadion Benteng Reborn. Dirancang dan dipublikasi untuk menangani pengundian dengan fokus pada transparansi dan stabilitas distribusi angka.
 
+## Demo
+[https://mrezadit.github.io/mayday-doorprize/](https://mrezadit.github.io/mayday-doorprize/)
+
 ## Fitur Teknis
 
 *   **Stabilisator Distribusi**: Menggunakan logika Stratified Sampling untuk memastikan pemenang tersebar rata di seluruh rentang 1 - 10.000. Sistem menyeimbangkan jatah pemenang per 20 draw untuk menghindari penumpukan angka di rentang tertentu.

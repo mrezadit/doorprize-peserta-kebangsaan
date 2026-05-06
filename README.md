@@ -1,4 +1,4 @@
-# Mayday Doorprize - Stadion Reborn
+# Mayday Doorprize - Stadion Benteng Reborn
 
 Aplikasi putaran angka doorprize sederhana untuk perayaan Hari Buruh di Stadion Benteng Reborn. Dirancang dan dipublikasi untuk menangani pengundian dengan fokus pada transparansi dan stabilitas distribusi angka.
 

@@ -3,11 +3,24 @@ import confetti from 'canvas-confetti';
 
 function App() {
   const TOTAL_PESERTA = 10000;
-  
+
+  // Fungsi Helper untuk mengacak array secara merata (Fisher-Yates Shuffle)
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const [pool, setPool] = useState(() => {
     const savedPool = localStorage.getItem('draw_pool_v4');
     if (savedPool) return JSON.parse(savedPool);
-    return Array.from({ length: TOTAL_PESERTA }, (_, i) => String(i + 1));
+    
+    // Inisialisasi pool dan langsung diacak agar index 0-10000 tidak berurutan
+    const initialPool = Array.from({ length: TOTAL_PESERTA }, (_, i) => String(i + 1));
+    return shuffleArray(initialPool);
   });
 
   const [isRolling, setIsRolling] = useState(false);
@@ -33,6 +46,7 @@ function App() {
     localStorage.setItem('draw_history_v4', JSON.stringify(history));
   }, [history]);
 
+  // Menggunakan Crypto API untuk keamanan tinggi
   const getSecureRandomIndex = (max) => {
     const array = new Uint32Array(1);
     window.crypto.getRandomValues(array);
@@ -43,7 +57,6 @@ function App() {
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
 
-    // PETASAN BANYAK
     const interval = setInterval(function() {
       const timeLeft = animationEnd - Date.now();
       if (timeLeft <= 0) return clearInterval(interval);
@@ -52,7 +65,6 @@ function App() {
       confetti({ particleCount, spread: 70, origin: { x: 1, y: 0.9 }, colors: ['#FFB800', '#FFFFFF', '#FF3B30'] });
     }, 250);
 
-    // HUJAN BALON 3X
     const balloonInterval = setInterval(function() {
       const timeLeft = animationEnd - Date.now();
       if (timeLeft <= 0) return clearInterval(balloonInterval);
@@ -72,31 +84,81 @@ function App() {
   };
 
   const startDraw = () => {
-    if (isRolling || !namaBarang || pemenangCurrentBarang.length >= jumlahPemenang) return;
-    if (pool.length === 0) return;
+      // Validasi awal agar tidak draw jika sedang memutar, barang belum diisi, atau jatah sudah habis
+      if (isRolling || !namaBarang || pemenangCurrentBarang.length >= jumlahPemenang) return;
+      if (pool.length === 0) return;
 
-    setIsRolling(true);
-    const randomIndex = getSecureRandomIndex(pool.length);
-    const winnerCode = pool[randomIndex];
-    const randomSequence = Array.from({ length: 60 }, () => pool[getSecureRandomIndex(pool.length)]);
-    const finalSequence = [...randomSequence, winnerCode];
-    setDisplayList(finalSequence);
+      setIsRolling(true);
 
-    if (reelRef.current) {
-      reelRef.current.style.transition = 'none';
-      reelRef.current.style.transform = 'translateY(0)';
-      reelRef.current.offsetHeight; 
-      reelRef.current.style.transition = 'transform 4.5s cubic-bezier(0.1, 0, 0.05, 1)';
-      reelRef.current.style.transform = `translateY(-${(finalSequence.length - 1) * itemHeight}px)`;
-    }
+      // --- LOGIKA STABILISATOR PER 20 DRAW ---
+      
+      // 1. Ambil semua pemenang dari history (termasuk yang baru saja menang di sesi ini tapi belum di-save)
+      const allRecentWinners = [
+        ...pemenangCurrentBarang,
+        ...history.flatMap(h => h.winners)
+      ].slice(0, 20); // Kita pantau 20 pemenang terakhir
 
-    setTimeout(() => {
-      setIsRolling(false);
-      setPemenangCurrentBarang(prev => [...prev, winnerCode]);
-      setPool(prevPool => prevPool.filter(num => num !== winnerCode));
-      fireCelebration();
-    }, 4500);
-  };
+      // 2. Hitung berapa kali tiap rentang ribuan muncul (Segmen 0-9)
+      const segmentCounts = new Array(10).fill(0);
+      allRecentWinners.forEach(w => {
+        const val = parseInt(w);
+        const segIdx = Math.floor((val - 1) / 1000);
+        if (segIdx >= 0 && segIdx < 10) segmentCounts[segIdx]++;
+      });
+
+      // 3. Tentukan batas minimal kemunculan (jatah)
+      const minCount = Math.min(...segmentCounts);
+      const candidateSegments = [];
+
+      // 4. Cari segmen mana yang masih ada pesertanya DAN jumlah kemenangannya paling sedikit
+      for (let i = 0; i < 10; i++) {
+        const startRange = i * 1000 + 1;
+        const endRange = (i + 1) * 1000;
+        
+        const membersInSegment = pool.filter(num => {
+          const n = parseInt(num);
+          return n >= startRange && n <= endRange;
+        });
+
+        // Jika segmen ini masih punya orang dan jumlah menangnya masih sedikit (di bawah kuota)
+        if (membersInSegment.length > 0 && segmentCounts[i] === minCount) {
+          candidateSegments.push(membersInSegment);
+        }
+      }
+
+      // 5. Pilih sumber data: Jika ada segmen yang "tertinggal", ambil dari sana. 
+      // Jika semua rata, ambil dari seluruh pool.
+      const finalPoolSource = candidateSegments.length > 0 
+        ? candidateSegments[getSecureRandomIndex(candidateSegments.length)]
+        : pool;
+
+      // 6. Pilih satu pemenang secara acak kriptografis dari sumber terpilih
+      const winnerCode = finalPoolSource[getSecureRandomIndex(finalPoolSource.length)];
+      
+      // --- END LOGIKA STABILISATOR ---
+
+      // Buat urutan animasi visual (tetap acak dari seluruh pool agar seru)
+      const randomSequence = Array.from({ length: 60 }, () => pool[getSecureRandomIndex(pool.length)]);
+      const finalSequence = [...randomSequence, winnerCode];
+      setDisplayList(finalSequence);
+
+      // Jalankan animasi reel
+      if (reelRef.current) {
+        reelRef.current.style.transition = 'none';
+        reelRef.current.style.transform = 'translateY(0)';
+        reelRef.current.offsetHeight; // Trigger reflow
+        reelRef.current.style.transition = 'transform 4.5s cubic-bezier(0.1, 0, 0.05, 1)';
+        reelRef.current.style.transform = `translateY(-${(finalSequence.length - 1) * itemHeight}px)`;
+      }
+
+      // Selesaikan proses setelah animasi selesai (4.5 detik)
+      setTimeout(() => {
+        setIsRolling(false);
+        setPemenangCurrentBarang(prev => [...prev, winnerCode]);
+        setPool(prevPool => prevPool.filter(num => num !== winnerCode));
+        fireCelebration();
+      }, 4500);
+    };
 
   const saveAndClear = () => {
     if (pemenangCurrentBarang.length === 0) return;
@@ -125,7 +187,6 @@ function App() {
     downloadAnchorNode.remove();
   };
 
-  // FUNGSI RESET TOTAL
   const resetTotal = () => {
     if (confirm("Apakah Anda yakin ingin menghapus SEMUA data pemenang dan mereset daftar peserta?")) {
       localStorage.clear();
@@ -136,16 +197,12 @@ function App() {
   return (
     <div className="min-h-screen bg-[#FF3B30] p-8 flex items-center justify-center overflow-hidden relative font-sans custom-cursor-area">
       <style>{`
-        /* CUSTOM MOUSE CURSOR */
         .custom-cursor-area {
           cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFB800' stroke='%23000' stroke-width='1.5' d='M4.5 3h15a1.5 1.5 0 0 1 1.5 1.5v15a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-15A1.5 1.5 0 0 1 4.5 3z'/%3E%3Cpath fill='%23fff' d='M12 7l1.5 3h3.5l-2.5 2.5 1 3.5-3.5-2-3.5 2 1-3.5-2.5-2.5h3.5z'/%3E%3C/svg%3E"), auto;
         }
-        
-        /* CURSOR SAAT HOVER TOMBOL */
         button, input, a {
           cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' stroke='%23FF3B30' stroke-width='2' d='M12 2l3 6 7 1-5 5 1.5 7-6.5-3.5-6.5 3.5 1.5-7-5-5 7-1 3-6z'/%3E%3C/svg%3E"), pointer !important;
         }
-
         @keyframes led-chase { 
           0%, 100% { opacity: 1; transform: scale(1.2); background-color: #fff; box-shadow: 0 0 10px #fff; } 
           50% { opacity: 0.2; transform: scale(0.8); background-color: #ffd700; } 
@@ -220,7 +277,6 @@ function App() {
           <div className="flex justify-between items-center mb-8 border-b-4 border-gray-100 pb-6">
             <h2 className="text-4xl font-black text-gray-800 italic uppercase">LIST MENANG</h2>
             <div className="flex gap-4">
-               {/* TOMBOL RESET TOTAL DI SINI */}
                <button onClick={resetTotal} className="bg-red-50 text-red-600 px-6 py-2 rounded-xl font-black uppercase text-xs hover:bg-red-600 hover:text-white transition-all border border-red-200">Reset Total</button>
                <button onClick={downloadJSON} className="bg-green-500 text-white px-6 py-2 rounded-xl font-black uppercase text-xs">Simpan JSON</button>
                <button onClick={() => setView('draw')} className="bg-red-600 text-white px-6 py-2 rounded-xl font-black uppercase text-xs">Tutup</button>

@@ -2,7 +2,10 @@
 
 Web app untuk doorprize dengan fokus angka acak dan animasi smooth.
 
-## Algoritma Pengundian
+## Demo
+[https://mrezadit.github.io/mayday-doorprize/](https://mrezadit.github.io/mayday-doorprize/)
+
+## Algoritma Doorprize
 
 1.  **Pool Data**: Generate array 1 - 10.000 saat start awal.
 2.  **Persistence**: Pool dan riwayat menang disimpan di Local Storage agar aman pas refresh.

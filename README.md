@@ -1,6 +1,6 @@
 # Mayday Doorprize - Stadion Benteng Reborn
 
-Aplikasi putaran angka doorprize sederhana untuk perayaan Hari Buruh di Stadion Benteng Reborn. Dirancang dan dipublikasi untuk menangani pengundian dengan fokus pada transparansi dan stabilitas distribusi angka.
+Aplikasi putaran angka doorprize sederhana _(doorprize picker system)_ untuk perayaan Hari Buruh di Stadion Benteng Reborn. Dirancang dan dipublikasi untuk menangani pengundian dengan fokus pada transparansi dan stabilitas distribusi angka.
 
 ## Demo
 
@@ -8,11 +8,12 @@ Aplikasi putaran angka doorprize sederhana untuk perayaan Hari Buruh di Stadion 
 
 ## Fitur Teknis
 
-*   **Stabilisator Distribusi**: Menggunakan logika Stratified Sampling untuk memastikan pemenang tersebar rata di seluruh rentang 1 - 10.000. Sistem menyeimbangkan jatah pemenang per 20 draw untuk menghindari penumpukan angka di rentang tertentu.
-*   **Secure Random**: Implementasi `window.crypto.getRandomValues()` untuk menjamin acakan tingkat tinggi yang memenuhi standar keamanan kriptografis.
+*   **Stabilisator Distribusi**: Menggunakan logika Stratified Sampling untuk memastikan pemenang tersebar rata di seluruh rentang 1 - 10.000 peserta / kupon. Sistem menyeimbangkan jarak pemenang per 20 putaran untuk menghindari penumpukan angka di rentang tertentu.
+*   **Secure Random**: Implementasi `window.crypto.getRandomValues()` untuk menjamin acakan tingkat tinggi yang memenuhi standar kriptografis.
 *   **Data Persistence**: Sinkronisasi otomatis ke Local Storage untuk menjaga data pool dan riwayat tetap aman jika terjadi refresh halaman atau gangguan koneksi.
 *   **Animasi Reel**: Animasi perpindahan angka menggunakan transisi CSS cubic-bezier untuk efek visual yang natural pada layar besar.
 *   **Manajemen Riwayat**: Pencatatan otomatis hasil menang per kategori barang dengan fitur ekspor ke format JSON untuk kebutuhan audit panitia.
+*   **Manajemen Kupon & Peserta**: Pengaturan dinamis jumlah total peserta dengan sistem pembagian 10 segmen otomatis, serta pencatatan riwayat pemenang per kategori yang dapat diekspor ke format JSON.
 
 ## Instalasi dan Penggunaan
 

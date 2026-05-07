@@ -281,7 +281,7 @@ function App() {
       {/* CUSTOM MODAL SYSTEM */}
       {modal.show && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xs bg-black/40">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl border-4 border-[#FFB800] animate-in zoom-in duration-300">
+          <div className="bg-white rounded-[2.5rem] w-full max-sm overflow-hidden shadow-2xl border-4 border-[#FFB800] animate-in zoom-in duration-300">
             <div className="p-8 text-center">
               <h3 className="text-xl lg:text-2xl font-black text-red-600 uppercase mb-4 tracking-tight">{modal.title}</h3>
               <p className="text-gray-500 font-bold text-xs lg:text-sm uppercase leading-relaxed">{modal.message}</p>
@@ -343,17 +343,28 @@ function App() {
             <input type="text" placeholder="NAMA BARANG" value={namaBarang} onChange={(e) => setNamaBarang(e.target.value)} className="w-full bg-white rounded-xl lg:rounded-2xl px-6 py-4 lg:py-5 text-xl lg:text-2xl font-bold mb-4 lg:mb-6 uppercase outline-none" />
             
             <div className="flex items-center justify-between mb-4 lg:mb-6 bg-black/20 p-4 rounded-xl">
-               <span className="text-white font-bold text-[10px] lg:text-xs uppercase">Pemenang:</span>
-               <div className="flex items-center bg-white rounded-lg lg:rounded-xl">
-                  <button onClick={() => setJumlahPemenang(Math.max(1, jumlahPemenang - 1))} className="px-3 lg:px-4 py-1 text-red-600 font-bold text-xl lg:text-2xl">-</button>
-                  <span className="px-2 font-bold text-lg lg:text-2xl min-w-[30px] text-center">{jumlahPemenang}</span>
-                  <button onClick={() => setJumlahPemenang(Math.min(50, jumlahPemenang + 1))} className="px-3 lg:px-4 py-1 text-green-600 font-bold text-xl lg:text-2xl">+</button>
-               </div>
+                <span className="text-white font-bold text-[10px] lg:text-xs uppercase">Pemenang:</span>
+                <div className="flex items-center bg-white rounded-lg lg:rounded-xl">
+                   <button onClick={() => setJumlahPemenang(Math.max(1, jumlahPemenang - 1))} className="px-3 lg:px-4 py-1 text-red-600 font-bold text-xl lg:text-2xl">-</button>
+                   <span className="px-2 font-bold text-lg lg:text-2xl min-w-[30px] text-center">{jumlahPemenang}</span>
+                   <button onClick={() => setJumlahPemenang(Math.min(50, jumlahPemenang + 1))} className="px-3 lg:px-4 py-1 text-green-600 font-bold text-xl lg:text-2xl">+</button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-4 lg:grid-cols-5 gap-2 lg:gap-3 mb-6 lg:mb-8 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+            {/* BAGIAN NOMOR: GRID MAKS 5 KOLOM, OTOMATIS BARIS BARU */}
+            <div className="grid grid-cols-5 gap-2 lg:gap-3 mb-6 lg:mb-8 min-h-[100px]">
               {Array.from({ length: jumlahPemenang }).map((_, i) => (
-                <div key={i} className={`aspect-square rounded-xl lg:rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${pemenangCurrentBarang[i] ? 'bg-white text-red-600 scale-105 shadow-lg' : 'bg-white/20 border-dashed border-2 border-white text-transparent'} font-bold text-sm lg:text-xl`}>
+                <div 
+                  key={i} 
+                  className={`
+                    w-full aspect-square rounded-lg lg:rounded-xl 
+                    flex items-center justify-center border-2 transition-all duration-500 
+                    ${pemenangCurrentBarang[i] 
+                      ? 'bg-white text-red-600 scale-105 shadow-lg border-white' 
+                      : 'bg-white/20 border-dashed border-2 border-white text-transparent'} 
+                    font-bold text-xs lg:text-lg
+                  `}
+                >
                   {pemenangCurrentBarang[i] || ''}
                 </div>
               ))}

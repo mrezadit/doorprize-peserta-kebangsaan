@@ -33,6 +33,9 @@ function App() {
   const [view, setView] = useState('draw');
   const [activeTab, setActiveTab] = useState('history'); 
 
+  // State untuk Custom Modal/Alert
+  const [modal, setModal] = useState({ show: false, title: '', message: '', onConfirm: null, isConfirm: false });
+
   const [history, setHistory] = useState(() => {
     const savedHistory = localStorage.getItem('draw_history_v4');
     return savedHistory ? JSON.parse(savedHistory) : [];
@@ -41,7 +44,6 @@ function App() {
   const reelRef = useRef(null);
   const itemHeight = 256;
 
-  // Sync state ke localStorage
   useEffect(() => {
     localStorage.setItem('draw_total_peserta_v4', totalPeserta.toString());
   }, [totalPeserta]);
@@ -53,6 +55,14 @@ function App() {
   useEffect(() => {
     localStorage.setItem('draw_history_v4', JSON.stringify(history));
   }, [history]);
+
+  const showAlert = (title, message) => {
+    setModal({ show: true, title, message, isConfirm: false, onConfirm: null });
+  };
+
+  const showConfirm = (title, message, onConfirm) => {
+    setModal({ show: true, title, message, isConfirm: true, onConfirm });
+  };
 
   const getSecureRandomIndex = (max) => {
     const array = new Uint32Array(1);
@@ -92,7 +102,10 @@ function App() {
 
   const startDraw = () => {
       if (isRolling || !namaBarang || pemenangCurrentBarang.length >= jumlahPemenang) return;
-      if (pool.length === 0) return;
+      if (pool.length === 0) {
+        showAlert("POOL HABIS", "Semua nomor kupon sudah terundi!");
+        return;
+      }
 
       setIsRolling(true);
       
@@ -162,7 +175,7 @@ function App() {
   };
 
   const downloadJSON = () => {
-    if (history.length === 0) return alert("Belum ada data!");
+    if (history.length === 0) return showAlert("DATA KOSONG", "Belum ada riwayat pemenang untuk diekspor.");
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(history, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
@@ -173,21 +186,30 @@ function App() {
   };
 
   const resetTotal = () => {
-    if (confirm("Apakah Anda yakin ingin menghapus SEMUA data?")) {
-      localStorage.clear();
-      window.location.reload();
-    }
+    showConfirm(
+      "RESET SEMUA DATA", 
+      "Ini akan menghapus riwayat pemenang, pool undian, dan pengaturan peserta secara permanen. Lanjutkan?",
+      () => {
+        localStorage.clear();
+        window.location.reload();
+      }
+    );
   };
 
   const handleUpdateTotal = (val) => {
     const newTotal = parseInt(val);
-    if (isNaN(newTotal) || newTotal < 10) return alert("Total minimal 10 orang");
-    if (confirm("Mengubah total peserta akan me-reset daftar pool undian (History tetap aman). Lanjutkan?")) {
-      setTotalPeserta(newTotal);
-      const newPool = Array.from({ length: newTotal }, (_, i) => String(i + 1));
-      setPool(shuffleArray(newPool));
-      alert("Total peserta berhasil diperbarui!");
-    }
+    if (isNaN(newTotal) || newTotal < 10) return showAlert("INPUT TIDAK VALID", "Jumlah peserta minimal adalah 10 orang.");
+    
+    showConfirm(
+      "UPDATE PESERTA",
+      `Mengubah total ke ${newTotal} akan me-reset daftar pool undian (Nomor yang belum keluar). History pemenang tetap tersimpan. Lanjutkan?`,
+      () => {
+        setTotalPeserta(newTotal);
+        const newPool = Array.from({ length: newTotal }, (_, i) => String(i + 1));
+        setPool(shuffleArray(newPool));
+        showAlert("BERHASIL", "Total peserta dan daftar pool telah diperbarui.");
+      }
+    );
   };
 
   const getDistributionData = () => {
@@ -221,6 +243,37 @@ function App() {
         .led-dot { animation: led-chase 0.8s infinite; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
       `}</style>
+
+      {/* CUSTOM MODAL SYSTEM */}
+      {modal.show && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xs bg-black/40">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl border-4 border-[#FFB800] animate-in zoom-in duration-300">
+            <div className="p-8 text-center">
+              <h3 className="text-2xl font-black text-red-600 uppercase mb-4 tracking-tight">{modal.title}</h3>
+              <p className="text-gray-500 font-bold text-sm uppercase leading-relaxed">{modal.message}</p>
+            </div>
+            <div className="flex border-t-4 border-gray-100">
+              {modal.isConfirm && (
+                <button 
+                  onClick={() => setModal({ ...modal, show: false })}
+                  className="flex-1 py-5 font-bold text-gray-400 hover:bg-gray-50 uppercase text-xs transition-colors border-r-4 border-gray-100"
+                >
+                  Batal
+                </button>
+              )}
+              <button 
+                onClick={() => {
+                  if (modal.onConfirm) modal.onConfirm();
+                  setModal({ ...modal, show: false });
+                }}
+                className="flex-1 py-5 font-bold text-red-600 hover:bg-red-50 uppercase text-xs transition-colors"
+              >
+                {modal.isConfirm ? 'Ya, Lanjutkan' : 'Mengerti'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {view === 'draw' ? (
         <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-12 items-center justify-between">

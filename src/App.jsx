@@ -2,7 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 
 function App() {
-  const TOTAL_PESERTA = 10000;
+  // State untuk Total Peserta (Default 10000 jika tidak ada di localStorage)
+  const [totalPeserta, setTotalPeserta] = useState(() => {
+    const savedTotal = localStorage.getItem('draw_total_peserta_v4');
+    return savedTotal ? parseInt(savedTotal) : 10000;
+  });
 
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -16,7 +20,7 @@ function App() {
   const [pool, setPool] = useState(() => {
     const savedPool = localStorage.getItem('draw_pool_v4');
     if (savedPool) return JSON.parse(savedPool);
-    const initialPool = Array.from({ length: TOTAL_PESERTA }, (_, i) => String(i + 1));
+    const initialPool = Array.from({ length: totalPeserta }, (_, i) => String(i + 1));
     return shuffleArray(initialPool);
   });
 
@@ -27,7 +31,7 @@ function App() {
   const [displayList, setDisplayList] = useState(['-']);
   
   const [view, setView] = useState('draw');
-  const [activeTab, setActiveTab] = useState('history'); // State untuk tab menu baru
+  const [activeTab, setActiveTab] = useState('history'); 
 
   const [history, setHistory] = useState(() => {
     const savedHistory = localStorage.getItem('draw_history_v4');
@@ -36,6 +40,11 @@ function App() {
 
   const reelRef = useRef(null);
   const itemHeight = 256;
+
+  // Sync state ke localStorage
+  useEffect(() => {
+    localStorage.setItem('draw_total_peserta_v4', totalPeserta.toString());
+  }, [totalPeserta]);
 
   useEffect(() => {
     localStorage.setItem('draw_pool_v4', JSON.stringify(pool));
@@ -86,11 +95,14 @@ function App() {
       if (pool.length === 0) return;
 
       setIsRolling(true);
+      
+      const segSize = Math.floor(totalPeserta / 10);
       const allRecentWinners = [...pemenangCurrentBarang, ...history.flatMap(h => h.winners)].slice(0, 20);
       const segmentCounts = new Array(10).fill(0);
+      
       allRecentWinners.forEach(w => {
         const val = parseInt(w);
-        const segIdx = Math.floor((val - 1) / 1000);
+        const segIdx = Math.min(Math.floor((val - 1) / segSize), 9);
         if (segIdx >= 0 && segIdx < 10) segmentCounts[segIdx]++;
       });
 
@@ -98,8 +110,8 @@ function App() {
       const candidateSegments = [];
 
       for (let i = 0; i < 10; i++) {
-        const startRange = i * 1000 + 1;
-        const endRange = (i + 1) * 1000;
+        const startRange = i * segSize + 1;
+        const endRange = (i === 9) ? totalPeserta : (i + 1) * segSize;
         const membersInSegment = pool.filter(num => {
           const n = parseInt(num);
           return n >= startRange && n <= endRange;
@@ -167,23 +179,41 @@ function App() {
     }
   };
 
+  const handleUpdateTotal = (val) => {
+    const newTotal = parseInt(val);
+    if (isNaN(newTotal) || newTotal < 10) return alert("Total minimal 10 orang");
+    if (confirm("Mengubah total peserta akan me-reset daftar pool undian (History tetap aman). Lanjutkan?")) {
+      setTotalPeserta(newTotal);
+      const newPool = Array.from({ length: newTotal }, (_, i) => String(i + 1));
+      setPool(shuffleArray(newPool));
+      alert("Total peserta berhasil diperbarui!");
+    }
+  };
+
   const getDistributionData = () => {
     const allWinners = history.flatMap(h => h.winners);
     const total = allWinners.length;
+    const segSize = Math.floor(totalPeserta / 10);
     const counts = new Array(10).fill(0);
+    
     allWinners.forEach(w => {
-      const segIdx = Math.floor((parseInt(w) - 1) / 1000);
+      const segIdx = Math.min(Math.floor((parseInt(w) - 1) / segSize), 9);
       if (segIdx >= 0 && segIdx < 10) counts[segIdx]++;
     });
-    return counts.map((count, i) => ({
-      range: `${i * 1000 + 1}-${(i + 1) * 1000}`,
-      count,
-      percentage: total > 0 ? ((count / total) * 100).toFixed(1) : 0
-    }));
+    
+    return counts.map((count, i) => {
+      const startRange = i * segSize + 1;
+      const endRange = (i === 9) ? totalPeserta : (i + 1) * segSize;
+      return {
+        range: `${startRange}-${endRange}`,
+        count,
+        percentage: total > 0 ? ((count / total) * 100).toFixed(1) : 0
+      };
+    });
   };
 
   return (
-    <div className="min-h-screen bg-[#FF3B30] p-8 flex items-center justify-center overflow-hidden relative font-sans custom-cursor-area">
+    <div className="min-h-screen bg-[#FF3B30] p-8 flex flex-col items-center justify-center overflow-hidden relative font-sans custom-cursor-area">
       <style>{`
         .custom-cursor-area { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFB800' stroke='%23000' stroke-width='1.5' d='M4.5 3h15a1.5 1.5 0 0 1 1.5 1.5v15a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-15A1.5 1.5 0 0 1 4.5 3z'/%3E%3Cpath fill='%23fff' d='M12 7l1.5 3h3.5l-2.5 2.5 1 3.5-3.5-2-3.5 2 1-3.5-2.5-2.5h3.5z'/%3E%3C/svg%3E"), auto; }
         button, input, a { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' stroke='%23FF3B30' stroke-width='2' d='M12 2l3 6 7 1-5 5 1.5 7-6.5-3.5-6.5 3.5 1.5-7-5-5 7-1 3-6z'/%3E%3C/svg%3E"), pointer !important; }
@@ -239,37 +269,25 @@ function App() {
           </div>
         </div>
       ) : (
-        /* UI LOG PANEL (HISTORY) DENGAN SISTEM TAB */
         <div className="w-full max-w-4xl bg-white rounded-[3rem] p-10 shadow-2xl h-[85vh] flex flex-col">
           <div className="flex justify-between items-center mb-6 border-b-4 border-gray-100 pb-6">
             <div className="flex flex-col gap-4">
-              <h2 className="text-4xl font-bold text-gray-800 uppercase tracking-tighter">HISTORY & STATISTIK</h2>
-              {/* MENU TAB TAMBAHAN */}
+              <h2 className="text-4xl font-bold text-gray-800 uppercase tracking-tighter">DATA & STATISTICS</h2>
               <div className="flex bg-gray-100 p-1.5 rounded-2xl w-fit">
-                <button 
-                  onClick={() => setActiveTab('history')} 
-                  className={`px-6 py-2 rounded-xl font-bold text-[10px] uppercase transition-all ${activeTab === 'history' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400'}`}
-                >
-                  History
-                </button>
-                <button 
-                  onClick={() => setActiveTab('stats')} 
-                  className={`px-6 py-2 rounded-xl font-bold text-[10px] uppercase transition-all ${activeTab === 'stats' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400'}`}
-                >
-                  Statistik %
-                </button>
+                <button onClick={() => setActiveTab('history')} className={`px-6 py-2 rounded-xl font-bold text-[10px] uppercase transition-all ${activeTab === 'history' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400'}`}>History</button>
+                <button onClick={() => setActiveTab('stats')} className={`px-6 py-2 rounded-xl font-bold text-[10px] uppercase transition-all ${activeTab === 'stats' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400'}`}>Statistik %</button>
+                <button onClick={() => setActiveTab('settings')} className={`px-6 py-2 rounded-xl font-bold text-[10px] uppercase transition-all ${activeTab === 'settings' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400'}`}>Peserta</button>
               </div>
             </div>
             <div className="flex gap-4 self-start">
-               <button onClick={resetTotal} className="bg-red-50 text-red-600 px-6 py-2 rounded-xl font-bold uppercase text-xs hover:bg-red-600 hover:text-white transition-all border border-red-200">Reset</button>
-               <button onClick={downloadJSON} className="bg-green-500 text-white px-6 py-2 rounded-xl font-bold uppercase text-xs">JSON</button>
-               <button onClick={() => setView('draw')} className="bg-red-600 text-white px-6 py-2 rounded-xl font-bold uppercase text-xs">Tutup</button>
+               <button onClick={resetTotal} className="bg-red-50 text-red-600 px-6 py-2 rounded-xl font-bold uppercase text-xs hover:bg-red-600 hover:text-white transition-all border border-red-200">RESET DATA</button>
+               <button onClick={downloadJSON} className="bg-green-500 text-white px-6 py-2 rounded-xl font-bold uppercase text-xs">DOWNLOAD JSON</button>
+               <button onClick={() => setView('draw')} className="bg-red-600 text-white px-6 py-2 rounded-xl font-bold uppercase text-xs">KEMBALI</button>
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2">
             {activeTab === 'history' ? (
-              /* KONTEN HISTORY ASLI */
               <div className="space-y-4">
                 {history.length === 0 && <p className="text-center py-20 font-bold text-gray-200 uppercase tracking-widest italic">Belum Ada Data</p>}
                 {history.map((h) => (
@@ -279,8 +297,7 @@ function App() {
                   </div>
                 ))}
               </div>
-            ) : (
-              /* KONTEN STATISTIK (CHART BAR) */
+            ) : activeTab === 'stats' ? (
               <div className="space-y-6 px-2">
                 <div className="bg-red-50 p-6 rounded-[2rem] border-2 border-red-100 mb-8 flex justify-between items-center">
                    <span className="text-red-800 font-bold uppercase text-sm">Total Putaran</span>
@@ -293,22 +310,64 @@ function App() {
                       <span className="text-gray-900">{data.count} ({data.percentage}%)</span>
                     </div>
                     <div className="w-full bg-gray-100 h-10 rounded-2xl overflow-hidden border border-gray-100 p-1">
-                      <div 
-                        className="h-full bg-red-500 rounded-xl transition-all duration-1000 ease-out flex items-center justify-end px-3" 
-                        style={{ width: `${Math.max(data.percentage, 5)}%` }}
-                      >
+                      <div className="h-full bg-red-500 rounded-xl transition-all duration-1000 ease-out flex items-center justify-end px-3" style={{ width: `${Math.max(data.percentage, 5)}%` }}>
                          {parseFloat(data.percentage) > 3 && <span className="text-[10px] text-white font-bold">{data.percentage}%</span>}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="max-w-md mx-auto py-10 space-y-8">
+                <div className="bg-gray-50 p-8 rounded-[2.5rem] border-2 border-gray-100">
+                  <label className="block text-gray-400 font-bold uppercase text-[10px] tracking-widest mb-4">Total Peserta / Kupon</label>
+                  <div className="flex flex-col gap-4">
+                    <input 
+                      type="number" 
+                      defaultValue={totalPeserta}
+                      id="total_input"
+                      className="w-full bg-white border-2 border-gray-200 rounded-2xl px-6 py-4 text-3xl font-bold outline-none focus:border-red-500 transition-all"
+                    />
+                    <button 
+                      onClick={() => handleUpdateTotal(document.getElementById('total_input').value)}
+                      className="w-full bg-red-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all uppercase text-sm"
+                    >
+                      Update Total & Reset Pool
+                    </button>
+                  </div>
+                </div>
+                <div className="px-6">
+                  <h4 className="text-red-600 font-bold uppercase text-xs mb-2">💡 Info Settings</h4>
+                  <ul className="text-gray-400 text-[10px] font-medium uppercase space-y-2 leading-relaxed">
+                    <li>• History pemenang tidak akan hilang saat update total.</li>
+                    <li>• Daftar nomor yang belum keluar (Pool) akan di-reset sesuai total baru.</li>
+                    <li>• Angka otomatis dibagi menjadi 10 segmen untuk pemerataan statistik.</li>
+                  </ul>
+                </div>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      <button onClick={() => setView(view === 'draw' ? 'history' : 'draw')} className="fixed bottom-6 right-6 bg-black/40 text-white px-6 py-4 rounded-2xl font-bold uppercase text-xs backdrop-blur-md border border-white/10">
+      {/* FOOTER DOCUMENTATION */}
+      {view !== 'draw' && (
+        <div className="fixed bottom-6 left-8 flex flex-col gap-1 z-40">
+          <span className="text-white text-[9px] font-bold uppercase tracking-widest">
+            Documentation & Source Code
+          </span>
+          <a 
+            href="https://github.com/mrezadit/mayday-doorprize" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-white text-sm font-medium hover:text-[#FFB800] transition-colors opacity-80 hover:opacity-100"
+          >
+            github.com/mrezadit/mayday-doorprize
+          </a>
+        </div>
+      )}
+
+      <button onClick={() => setView(view === 'draw' ? 'history' : 'draw')} className="fixed bottom-6 right-6 bg-black/40 text-white px-6 py-4 rounded-2xl font-bold uppercase text-xs backdrop-blur-md border border-white/10 z-50">
         {view === 'draw' ? 'History' : 'KEMBALI'}
       </button>
     </div>

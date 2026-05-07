@@ -1,6 +1,10 @@
-# Mayday Doorprize - Stadion Reborn
+# Mayday Doorprize - Stadion Benteng Reborn
 
 Aplikasi putaran angka doorprize sederhana untuk perayaan Hari Buruh di Stadion Benteng Reborn. Dirancang dan dipublikasi untuk menangani pengundian dengan fokus pada transparansi dan stabilitas distribusi angka.
+
+## Demo
+
+[https://mrezadit.github.io/mayday-doorprize/](https://mrezadit.github.io/mayday-doorprize/)
 
 ## Fitur Teknis
 
@@ -20,7 +24,7 @@ Aplikasi putaran angka doorprize sederhana untuk perayaan Hari Buruh di Stadion 
 
 2.  **Instal Dependensi**
     
-```bash
+    ```bash
     npm install
     ```
 

@@ -165,7 +165,7 @@ function App() {
         reelRef.current.style.transition = 'none';
         reelRef.current.style.transform = 'translateY(0)';
         reelRef.current.offsetHeight; 
-        reelRef.current.style.transition = 'transform 4.5s cubic-bezier(0.1, 0, 0.05, 1)';
+        reelRef.current.style.transition = 'transform 1s cubic-bezier(0.1, 0, 0.05, 1)';
         reelRef.current.style.transform = `translateY(-${(finalSequence.length - 1) * itemHeight}px)`;
       }
 
@@ -174,7 +174,7 @@ function App() {
         setPemenangCurrentBarang(prev => [...prev, winnerCode]);
         setPool(prevPool => prevPool.filter(num => num !== winnerCode));
         fireCelebration();
-      }, 4500);
+      }, 1000);
   };
 
   const saveAndClear = () => {
